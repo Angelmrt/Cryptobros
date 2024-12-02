@@ -2,6 +2,7 @@ const criptomonedasSelect = document.querySelector('#criptomonedas');
 const monedaSelect = document.querySelector('#moneda');
 const formulario = document.querySelector('#formulario');
 const resultado = document.querySelector('#resultado');
+const botonesGrafico = document.querySelector('#botones-grafico');
 
 const objBusqueda = {
     moneda: '',
@@ -15,8 +16,8 @@ const obtenerCriptomonedas = criptomonedas => new Promise(resolve => {
 document.addEventListener('DOMContentLoaded', () => {
     consultarCriptomonedas();
     formulario.addEventListener('submit', submitFormulario);
-    criptomonedasSelect.addEventListener('change', actualizarGrafico);
-    monedaSelect.addEventListener('change', actualizarGrafico);
+    criptomonedasSelect.addEventListener('change', leerValor);
+    monedaSelect.addEventListener('change', leerValor);
 });
 
 function consultarCriptomonedas() {
@@ -54,7 +55,8 @@ function submitFormulario(e) {
     }
 
     consultarAPI();
-    cargarDatosHistoricos(criptomoneda, moneda);
+    cargarDatos('histoday');
+    crearBotones();
 }
 
 function mostrarAlerta(mensaje) {
@@ -134,10 +136,12 @@ function limpiarHTML() {
     }
 }
 
-function cargarDatosHistoricos(cripto, divisa) {
-    if (!cripto || !divisa) return; 
+function cargarDatos(tipo) {
+    const { criptomoneda, moneda } = objBusqueda;
 
-    const url = `https://min-api.cryptocompare.com/data/v2/histoday?fsym=${cripto}&tsym=${divisa}&limit=100`;
+    if (!criptomoneda || !moneda) return;
+
+    const url = `https://min-api.cryptocompare.com/data/v2/${tipo}?fsym=${criptomoneda}&tsym=${moneda}&limit=100`;
 
     fetch(url)
         .then(response => response.json())
@@ -166,50 +170,27 @@ function crearGrafico(datosVelas) {
             }
         ],
         chart: {
-            type: 'candlestick', 
-            height: 350, 
+            type: 'candlestick',
+            height: 350,
             toolbar: {
-                show: false 
-            }
-        },
-        title: {
-            text: 'Grafico Criptomonedas',
-            align: 'left',
-            style: {
-                color: '#ffffff' 
+                show: false
             }
         },
         xaxis: {
-            type: 'datetime', 
-            labels: {
-                style: {
-                    colors: '#ffffff', 
-                }
-            }
+            type: 'datetime'
         },
         yaxis: {
             tooltip: {
-                enabled: true 
+                enabled: true
             },
             labels: {
                 style: {
-                    colors: '#ffffff', 
-                }
-            }
-        },
-        grid: {
-            borderColor: '#444444',
-        },
-        plotOptions: {
-            candlestick: {
-                colors: {
-                    upward: '#00ff00', 
-                    downward: '#ff0000' 
+                    colors: '#ffffff', // Texto del eje Y en blanco
                 }
             }
         },
         theme: {
-            mode: 'dark' 
+            mode: 'dark' // Tema oscuro para un mejor contraste
         }
     };
 
@@ -217,8 +198,23 @@ function crearGrafico(datosVelas) {
     window.miGrafico.render();
 }
 
-function actualizarGrafico() {
-    leerValor({ target: this });
-    const { criptomoneda, moneda } = objBusqueda;
-    cargarDatosHistoricos(criptomoneda, moneda);
+function crearBotones() {
+    botonesGrafico.innerHTML = '';
+
+    const tipos = [
+        
+        { id: 'histoday', texto: 'Día' },
+        { id: 'histohour', texto: 'Hora' },
+        { id: 'histominute', texto: 'Minuto' }
+    ];
+
+    tipos.forEach(tipo => {
+        const boton = document.createElement('button');
+        boton.textContent = tipo.texto;
+        boton.classList.add('btn', 'btn-secondary', 'mx-2', 'bg-primary','text-white');
+
+        boton.addEventListener('click', () => cargarDatos(tipo.id));
+
+        botonesGrafico.appendChild(boton);
+    });
 }
